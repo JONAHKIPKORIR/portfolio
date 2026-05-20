@@ -103,7 +103,7 @@ const Hero = () => {
               { icon: FiGithub, href: "https://github.com/JONAHKIPKORIR", label: "GitHub" },
               { icon: FiLinkedin, href: "#", label: "LinkedIn" },
               { icon: FiTwitter, href: "#", label: "Twitter" },
-              { icon: FiMail, href: "mailto:jonah.kiplimo@gmail.com", label: "Email" },
+              { icon: FiMail, href: "mailto:jonahkiplimo8@gmail.com", label: "Email" },
             ].map((social, index) => (
               <motion.a
                 key={index}

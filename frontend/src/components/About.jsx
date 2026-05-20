@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { FiAward, FiUsers, FiCode, FiCoffee } from 'react-icons/fi';
+import { Link } from 'react-scroll';
 
 const About = () => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
