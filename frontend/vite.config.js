@@ -9,5 +9,17 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
-    server: { port: 5173, proxy: { '/api': 'http://localhost:5000' } }
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      }
+    }
+  },
+  // Make env variables available to the app
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL)
+  }
 })

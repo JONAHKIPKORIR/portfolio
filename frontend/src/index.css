@@ -66,14 +66,36 @@
     scroll-behavior: smooth;
   }
   
+  /* LIGHT MODE (default) */
   body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
     overflow-x: hidden;
+    color: #1f2937;
   }
   
+  /* DARK MODE */
   .dark body {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    color: #f3f4f6;
+  }
+  
+  /* Headings base colors */
+  h1, h2, h3, h4, h5, h6 {
+    color: #1f2937;
+  }
+  
+  .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+    color: #ffffff;
+  }
+  
+  /* Paragraph base colors */
+  p, span, li, label {
+    color: #4b5563;
+  }
+  
+  .dark p, .dark span, .dark li, .dark label {
+    color: #d1d5db;
   }
   
   /* Custom scrollbar */
@@ -82,7 +104,7 @@
   }
   
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
     border-radius: 10px;
   }
   
@@ -98,26 +120,54 @@
 
 /* ========== COMPONENT STYLES ========== */
 @layer components {
+  /* ===== GLASS CARD - FIXED FOR BOTH MODES ===== */
   .glass-card {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     border-radius: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
   }
   
   .glass-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.7);
   }
   
+  /* Dark mode glass card */
   .dark .glass-card {
-    background: rgba(18, 25, 45, 0.7);
+    background: rgba(18, 25, 45, 0.75);
     border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
   
+  .dark .glass-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* Card content colors - LIGHT MODE */
+  .glass-card h1, .glass-card h2, .glass-card h3, .glass-card h4 {
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+  
+  .glass-card p, .glass-card span {
+    color: #4b5563;
+  }
+  
+  /* Card content colors - DARK MODE */
+  .dark .glass-card h1, .dark .glass-card h2, .dark .glass-card h3, .dark .glass-card h4 {
+    color: #ffffff;
+  }
+  
+  .dark .glass-card p, .dark .glass-card span {
+    color: #cbd5e1;
+  }
+  
+  /* ===== BUTTON STYLES ===== */
   .btn-primary {
     background: linear-gradient(135deg, #667eea, #764ba2);
     background-size: 200% 200%;
@@ -128,6 +178,9 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .btn-primary:hover {
@@ -141,59 +194,80 @@
   }
   
   .btn-secondary {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(10px);
-    color: white;
+    color: #374151;
     font-weight: 500;
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
   }
   
+  /* Dark mode secondary button */
   .dark .btn-secondary {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    color: #e5e7eb;
     border-color: rgba(255, 255, 255, 0.2);
   }
   
+  .dark .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* ===== INPUT STYLES ===== */
   .input-primary {
     width: 100%;
     padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.1);
+    background: white;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
-    color: white;
+    color: #1f2937;
     transition: all 0.3s ease;
   }
   
   .input-primary:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
   }
   
   .input-primary::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: #9ca3af;
   }
   
+  /* Dark mode input */
   .dark .input-primary {
-    background: rgba(0, 0, 0, 0.3);
-    color: #f1f5f9;
+    background: #1f2937;
+    border-color: #374151;
+    color: #f3f4f6;
   }
   
+  .dark .input-primary::placeholder {
+    color: #6b7280;
+  }
+  
+  .dark .input-primary:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+  }
+  
+  /* ===== SECTION TITLE ===== */
   .section-title {
     font-size: 2.5rem;
     font-weight: 700;
     text-align: center;
     margin-bottom: 3rem;
-    background: linear-gradient(135deg, #fff, #a78bfa);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     background-size: 200% 200%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -205,5 +279,42 @@
     .section-title {
       font-size: 3rem;
     }
+  }
+  
+  /* ===== STATS CARD (for dashboard) ===== */
+  .stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .stat-card {
+    background: rgba(30, 41, 59, 0.8);
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+  
+  .stat-label {
+    color: #6b7280;
+    margin-top: 0.5rem;
+  }
+  
+  .dark .stat-label {
+    color: #9ca3af;
   }
 }

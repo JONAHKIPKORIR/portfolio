@@ -2,22 +2,13 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { FiGithub, FiExternalLink, FiCode, FiEye } from 'react-icons/fi';
-import axios from 'axios';
-
+import api from '../services/api'; // Use the configured api instance
 const Projects = () => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState('all');
   const [selectedProject, setSelectedProject] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Fetch projects from backend or use demo data
-    axios.get('/api/projects')
-      .then(res => setProjects(res.data))
-      .catch(() => setProjects(demoProjects))
-      .finally(() => setLoading(false));
-  }, []);
 
   const demoProjects = [
     {
@@ -58,6 +49,27 @@ const Projects = () => {
     },
   ];
 
+
+
+// Instead of hardcoded axios.get
+useEffect(() => {
+    api.get('/projects')  // ← Uses env variable automatically
+      .then(res => {
+        if (res.data && Array.isArray(res.data.data)) {
+          setProjects(res.data.data);
+        } else if (Array.isArray(res.data)) {
+          setProjects(res.data);
+        } else {
+          setProjects(demoProjects);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching projects:', err);
+        setProjects(demoProjects);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const categories = [
     { id: 'all', label: 'All Projects' },
     { id: 'fullstack', label: 'Full Stack' },
@@ -65,9 +77,21 @@ const Projects = () => {
     { id: 'backend', label: 'Backend' },
   ];
 
-  const filteredProjects = filter === 'all' 
-    ? projects 
-    : projects.filter(p => p.category === filter);
+  // Make sure projects is an array before filtering
+  const filteredProjects = Array.isArray(projects) 
+    ? (filter === 'all' ? projects : projects.filter(p => p.category === filter))
+    : [];
+
+  if (loading) {
+    return (
+      <section id="Projects" className="py-20">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading projects...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="Projects" className="py-20 bg-gray-50/50 dark:bg-gray-900/30">
@@ -103,76 +127,84 @@ const Projects = () => {
           </motion.div>
 
           {/* Projects Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project, index) => (
-              <motion.div
-                key={project._id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={inView ? { opacity: 1, y: 0 } : {}}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
-                className="glass-card overflow-hidden group cursor-pointer"
-                onClick={() => setSelectedProject(project)}
-              >
-                {/* Project Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={project.image} 
-                    alt={project.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <a 
-                      href={project.githubUrl}
-                      target="_blank"
-                      onClick={(e) => e.stopPropagation()}
-                      className="p-2 bg-white/20 backdrop-blur rounded-lg hover:bg-white/30 transition"
-                    >
-                      <FiGithub className="text-white" />
-                    </a>
-                    {project.liveUrl && (
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No projects found in this category.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project, index) => (
+                <motion.div
+                  key={project._id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={inView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ y: -10 }}
+                  className="glass-card overflow-hidden group cursor-pointer"
+                  onClick={() => setSelectedProject(project)}
+                >
+                  {/* Project Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a 
-                        href={project.liveUrl}
+                        href={project.githubUrl}
                         target="_blank"
+                        rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="p-2 bg-white/20 backdrop-blur rounded-lg hover:bg-white/30 transition"
                       >
-                        <FiExternalLink className="text-white" />
+                        <FiGithub className="text-white" />
                       </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Project Info */}
-                <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 dark:text-white">{project.title}</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
-                    {project.description}
-                  </p>
-                  
-                  {/* Tech Stack */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.techStack.slice(0, 3).map(tech => (
-                      <span key={tech} className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 rounded">
-                        {tech}
-                      </span>
-                    ))}
-                    {project.techStack.length > 3 && (
-                      <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">
-                        +{project.techStack.length - 3}
-                      </span>
-                    )}
+                      {project.liveUrl && project.liveUrl !== '#' && (
+                        <a 
+                          href={project.liveUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-2 bg-white/20 backdrop-blur rounded-lg hover:bg-white/30 transition"
+                        >
+                          <FiExternalLink className="text-white" />
+                        </a>
+                      )}
+                    </div>
                   </div>
 
-                  {/* View Details Button */}
-                  <button className="text-purple-600 dark:text-purple-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
-                    <FiEye /> View Details
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  {/* Project Info */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2 dark:text-white">{project.title}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
+                    
+                    {/* Tech Stack */}
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {project.techStack?.slice(0, 3).map(tech => (
+                        <span key={tech} className="text-xs px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-300 rounded">
+                          {tech}
+                        </span>
+                      ))}
+                      {project.techStack?.length > 3 && (
+                        <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-500 rounded">
+                          +{project.techStack.length - 3}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* View Details Button */}
+                    <button className="text-purple-600 dark:text-purple-400 text-sm font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                      <FiEye /> View Details
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
 
@@ -198,18 +230,18 @@ const Projects = () => {
                 <img src={selectedProject.image} alt={selectedProject.title} className="w-full rounded-lg mb-4" />
                 <p className="text-gray-600 dark:text-gray-300 mb-4">{selectedProject.fullDescription}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedProject.techStack.map(tech => (
+                  {selectedProject.techStack?.map(tech => (
                     <span key={tech} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-600 rounded text-sm">
                       {tech}
                     </span>
                   ))}
                 </div>
                 <div className="flex gap-4">
-                  <a href={selectedProject.githubUrl} target="_blank" className="btn-primary inline-flex items-center gap-2">
+                  <a href={selectedProject.githubUrl} target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center gap-2">
                     <FiGithub /> View Code
                   </a>
-                  {selectedProject.liveUrl && (
-                    <a href={selectedProject.liveUrl} target="_blank" className="btn-secondary inline-flex items-center gap-2">
+                  {selectedProject.liveUrl && selectedProject.liveUrl !== '#' && (
+                    <a href={selectedProject.liveUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary inline-flex items-center gap-2">
                       <FiExternalLink /> Live Demo
                     </a>
                   )}

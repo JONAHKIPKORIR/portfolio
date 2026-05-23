@@ -1,30 +1,60 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');  // ← Make sure bcrypt is imported
 const Admin = require('../models/Admin');
 const Project = require('../models/Project');
 const BlogPost = require('../models/BlogPost');
 const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');
+
 const router = express.Router();
 
+// ========== ADMIN LOGIN ==========
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        
+        // Find admin by email
         const admin = await Admin.findOne({ email });
-        if (!admin) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        const isMatch = await admin.comparePassword(password);
-        if (!isMatch) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-        const token = jwt.sign({ id: admin._id, email: admin.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.json({ success: true, token, admin: { id: admin._id, name: admin.name, email: admin.email } });
+        if (!admin) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+        
+        // Compare password using bcrypt directly
+        const isMatch = await bcrypt.compare(password, admin.password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+        
+        // Generate JWT token
+        const token = jwt.sign(
+            { id: admin._id, email: admin.email, role: admin.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        
+        res.json({
+            success: true,
+            token,
+            admin: {
+                id: admin._id,
+                name: admin.name,
+                email: admin.email,
+                role: admin.role
+            }
+        });
     } catch (error) {
+        console.error('Login error:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
+// ========== GET CURRENT ADMIN (Protected) ==========
 router.get('/me', protect, async (req, res) => {
     res.json({ success: true, admin: req.admin });
 });
 
+// ========== STATISTICS (Protected) ==========
 router.get('/stats', protect, async (req, res) => {
     try {
         const [projects, blogPosts, messages, unreadMessages] = await Promise.all([
@@ -39,6 +69,7 @@ router.get('/stats', protect, async (req, res) => {
     }
 });
 
+// ========== PROJECT MANAGEMENT (Protected) ==========
 router.get('/projects', protect, async (req, res) => {
     try {
         const projects = await Project.find().sort('-createdAt');
@@ -77,6 +108,7 @@ router.delete('/projects/:id', protect, async (req, res) => {
     }
 });
 
+// ========== BLOG MANAGEMENT (Protected) ==========
 router.get('/blog', protect, async (req, res) => {
     try {
         const posts = await BlogPost.find().sort('-createdAt');
@@ -113,6 +145,7 @@ router.delete('/blog/:id', protect, async (req, res) => {
     }
 });
 
+// ========== MESSAGES MANAGEMENT (Protected) ==========
 router.get('/messages', protect, async (req, res) => {
     try {
         const messages = await Message.find().sort('-createdAt');

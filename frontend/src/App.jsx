@@ -1,4 +1,4 @@
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
@@ -11,6 +11,8 @@ import Contact from './components/Contact';
 import Footer from './components/Footer';
 import CustomCursor from './components/CustomCursor';
 import ScrollProgress from './components/ScrollProgress';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -36,16 +38,28 @@ function App() {
             },
           }}
         />
-        <Navbar />
-        <main>
-          <Hero />
-          <About />
-          <Projects />
-          <Skills />
-          <Blog />
-          <Contact />
-        </main>
-        <Footer />
+        
+        <Routes>
+          {/* Admin Routes - No Navbar/Footer */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          
+          {/* Public Portfolio Routes - With Navbar/Footer */}
+          <Route path="/*" element={
+            <>
+              <Navbar />
+              <main>
+                <Hero />
+                <About />
+                <Projects />
+                <Skills />
+                <Blog />
+                <Contact />
+              </main>
+              <Footer />
+            </>
+          } />
+        </Routes>
       </AnimatePresence>
     </BrowserRouter>
   );

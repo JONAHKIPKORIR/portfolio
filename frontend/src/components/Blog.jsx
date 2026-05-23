@@ -2,19 +2,31 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { FiCalendar, FiUser, FiTag, FiArrowRight } from 'react-icons/fi';
-import axios from 'axios';
+import api from '../services/api';
 
 const Blog = () => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    axios.get('/api/blog')
-      .then(res => setPosts(res.data))
-      .catch(() => setPosts(demoPosts))
+useEffect(() => {
+    api.get('/blog')  // ← Uses env variable automatically
+      .then(res => {
+        if (res.data && Array.isArray(res.data.data)) {
+          setPosts(res.data.data);
+        } else if (Array.isArray(res.data)) {
+          setPosts(res.data);
+        } else {
+          setPosts(demoPosts);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching blog posts:', err);
+        setPosts(demoPosts);
+      })
       .finally(() => setLoading(false));
   }, []);
+
 
   const demoPosts = [
     {

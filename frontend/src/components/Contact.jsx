@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { FiMail, FiUser, FiMessageSquare, FiSend, FiMapPin, FiPhone } from 'react-icons/fi';
-import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const Contact = () => {
@@ -10,17 +9,21 @@ const Contact = () => {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+
+const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post('/api/contact', form);
-      toast.success('Message sent successfully! I\'ll get back to you soon.');
-      setForm({ name: '', email: '', message: '' });
+      const response = await api.post('/contact', form);  // ← Uses env variable
+      if (response.data.success) {
+        toast.success('Message sent successfully!');
+        setForm({ name: '', email: '', message: '' });
+      }
     } catch (error) {
-      toast.error('Failed to send message. Please try again.');
+      toast.error(error.response?.data?.error || 'Failed to send message');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const contactInfo = [
