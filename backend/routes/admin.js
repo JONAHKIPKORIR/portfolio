@@ -11,6 +11,7 @@ const { protect } = require('../middleware/auth');
 const router = express.Router();
 
 // ========== ADMIN LOGIN ==========
+router.post('/login', async (req, res) => {
     console.log('🔐 Admin login attempt:', req.body.email);
     try {
         const { email, password } = req.body;
