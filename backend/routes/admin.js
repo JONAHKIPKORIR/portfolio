@@ -275,4 +275,65 @@ router.delete('/messages/:id', protect, async (req, res) => {
     }
 });
 
+// ========== CV MANAGEMENT ==========
+router.get('/cv', protect, async (req, res) => {
+    try {
+        // Check if CV exists
+        const fs = require('fs');
+        const path = require('path');
+        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
+        
+        if (fs.existsSync(cvPath)) {
+            res.json({ success: true, hasCV: true, url: '/api/admin/cv/download' });
+        } else {
+            res.json({ success: true, hasCV: false });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+router.get('/cv/download', async (req, res) => {
+    try {
+        const path = require('path');
+        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
+        res.download(cvPath, 'Jonah_Kiplimo_CV.pdf');
+    } catch (error) {
+        res.status(404).json({ success: false, error: 'CV not found' });
+    }
+});
+
+// Upload CV (using multer)
+const multer = require('multer');
+const upload = multer({ 
+    dest: 'uploads/',
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDF files are allowed'), false);
+        }
+    }
+});
+
+router.post('/cv/upload', protect, upload.single('cv'), async (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
+        
+        // Delete old CV if exists
+        if (fs.existsSync(cvPath)) {
+            fs.unlinkSync(cvPath);
+        }
+        
+        // Rename uploaded file to cv.pdf
+        fs.renameSync(req.file.path, cvPath);
+        
+        res.json({ success: true, message: 'CV uploaded successfully!' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiFolder, FiFileText, FiMail, FiEye, FiPlus, FiEdit2, FiTrash2, 
-  FiRefreshCw, FiLogOut, FiGrid, FiList, FiStar, FiTrendingUp,
-  FiMessageCircle, FiCheckCircle, FiXCircle, FiUser, FiCalendar,
-  FiGithub, FiExternalLink, FiImage, FiTag, FiSave, FiX, FiUsers,
-  FiShield, FiUserPlus, FiUserMinus
+  FiRefreshCw, FiLogOut, FiGrid, FiStar, FiTrendingUp,
+  FiMessageCircle, FiCheckCircle, FiUser, FiCalendar,
+  FiSave, FiX, FiUsers, FiShield, FiUserPlus, FiUserMinus,
+  FiSettings, FiDownload, FiCopy
 } from 'react-icons/fi';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -27,6 +27,7 @@ const AdminDashboard = () => {
     title: '', description: '', fullDescription: '', image: '',
     techStack: [], githubUrl: '', liveUrl: '', category: 'fullstack', featured: false
   });
+  const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
 
   const token = localStorage.getItem('adminToken');
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -34,6 +35,132 @@ const AdminDashboard = () => {
     baseURL: API_URL,
     headers: { Authorization: `Bearer ${token}` }
   });
+
+  // Project templates for quick add
+  // ===== INSIDE AdminDashboard.jsx, replace the entire projectTemplates array =====
+
+const projectTemplates = [
+  {
+    title: "URL Shortener API",
+    description: "Production-ready URL shortener with analytics, click tracking, and custom short codes.",
+    fullDescription: "A high-performance URL shortening service that generates unique codes, tracks click analytics, and provides detailed statistics. Built with Node.js, Express, and MongoDB.",
+    image: "https://via.placeholder.com/600x400/764ba2/ffffff?text=URL+Shortener",
+    techStack: ["Node.js", "Express", "MongoDB", "Redis", "JWT"],
+    githubUrl: "https://github.com/JONAHKIPKORIR/url-shortener",
+    liveUrl: "https://url-shortener-mny6.onrender.com",
+    category: "fullstack",
+    featured: true
+  },
+  {
+    title: "TaskFlow - Real-time PM Tool",
+    description: "Real-time task management with WebSockets, JWT auth, and MongoDB. Drag-drop tasks, team collaboration.",
+    fullDescription: "TaskFlow is a comprehensive project management tool that helps teams organize tasks, track progress, and collaborate in real-time. Built with the MERN stack and Socket.io for instant updates.",
+    image: "https://via.placeholder.com/600x400/667eea/ffffff?text=TaskFlow",
+    techStack: ["React", "Node.js", "Socket.io", "MongoDB", "Tailwind", "JWT"],
+    githubUrl: "https://github.com/JONAHKIPKORIR/taskflow",
+    liveUrl: "https://taskflow-demo.onrender.com",
+    category: "fullstack",
+    featured: true
+  },
+  {
+    title: "E-Commerce Platform",
+    description: "Full-featured e-commerce platform with cart, payments, and admin dashboard.",
+    fullDescription: "Complete e-commerce solution with product management, shopping cart, Stripe integration, order tracking, and admin panel.",
+    image: "https://via.placeholder.com/600x400/ec4899/ffffff?text=E-Commerce",
+    techStack: ["React", "Node.js", "Stripe", "MongoDB", "Redux"],
+    githubUrl: "#",
+    liveUrl: "#",
+    category: "fullstack",
+    featured: false
+  },
+  {
+    title: "Real-Time Chat App",
+    description: "Full-featured chat application with Socket.io, typing indicators, read receipts, and file sharing.",
+    fullDescription: "A complete real-time chat application with one-on-one and group chat, file sharing, typing indicators, and read receipts. Perfect for team communication.",
+    image: "https://via.placeholder.com/600x400/667eea/ffffff?text=Chat+App",
+    techStack: ["React", "Node.js", "Socket.io", "MongoDB", "Cloudinary"],
+    githubUrl: "#",
+    liveUrl: "#",
+    category: "fullstack",
+    featured: false
+  },
+  {
+    title: "Wedding Planner App",
+    description: "Complete wedding planning platform with budget tracking, guest list, tasks, vendors, and seating chart.",
+    fullDescription: "A comprehensive wedding planning tool with budget management, guest list with CSV import/export, task checklist, vendor management, seating chart, and wedding timeline.",
+    techStack: ["React", "Node.js", "MongoDB", "Socket.io", "Tailwind"],
+    githubUrl: "#",
+    liveUrl: "https://plan-my-wedding-app.vercel.app",
+    category: "fullstack",
+    featured: true
+  },
+  {
+    title: "Portfolio CMS",
+    description: "Personal portfolio with admin CMS, blog, project management, and contact form.",
+    fullDescription: "A modern portfolio website with a full-featured CMS for managing projects, blog posts, messages, and admin users. Built with React, Node.js, and MongoDB.",
+    techStack: ["React", "Node.js", "MongoDB", "JWT", "Tailwind"],
+    githubUrl: "#",
+    liveUrl: "https://jonah-kiplimo-portfolio.vercel.app",
+    category: "fullstack",
+    featured: true
+  },
+
+  {
+  title: "PipForge",
+  description: "Free professional forex trading tools — pip calculators, position sizing, risk management, and a trading journal. Built for traders of all levels.",
+  fullDescription: "PipForge is a full-stack forex trading tools platform offering 10+ free calculators including pip value, position size, margin, risk/reward, profit/loss, lot size, compound growth, pivot points, drawdown, and Fibonacci retracement. It features a free trading journal with Supabase authentication, trade logging with emotion tagging, P&L auto-calculation, performance statistics (win rate, profit factor, streaks), cumulative P&L charting, and trade filtering. Built with a monetization strategy combining Google AdSense, broker affiliate programs (XM, Exness), and a future freemium SaaS tier. All calculators work with MT4, MT5, cTrader and every broker worldwide.",
+  image: "https://via.placeholder.com/600x400/16a34a/ffffff?text=PipForge",
+  techStack: ["Next.js", "TypeScript", "Tailwind CSS v4", "Supabase", "PostgreSQL", "Recharts", "Vercel"],
+  githubUrl: "https://github.com/JONAHKIPKORIR/pipforge",
+  liveUrl: "https://pipforge-tau.vercel.app/",
+  category: "fullstack",
+  featured: true
+},
+  {
+    title: "DataGrow",
+    description: "A platform for building and managing real-time data pipelines and analytics dashboards.",
+    fullDescription: "DataGrow simplifies data engineering with an intuitive interface for creating data pipelines, visualizing data flows, and building real-time analytics dashboards. It's designed to help teams turn raw data into actionable insights without the complexity of traditional ETL tools.",
+    image: "https://via.placeholder.com/600x400/065f46/ffffff?text=DataGrow",
+    techStack: ["React", "Node.js", "Apache Kafka", "PostgreSQL", "D3.js"],
+    githubUrl: "https://github.com/JONAHKIPKORIR/datagrow",
+    liveUrl: "https://data-grow.onrender.com",
+    category: "fullstack",
+    featured: false
+  },
+  {
+  title: "Flux — Fintech Dashboard Kit",
+  description: "A React + TypeScript + Tailwind CSS v4 UI kit with 15 production-ready components for fintech and SaaS dashboards.",
+  fullDescription: "Flux is a commercial fintech dashboard component kit built with React, TypeScript, and Tailwind CSS v4. It includes a full auth flow (login, signup, OTP, forgot password), a dashboard shell with responsive sidebar, stat cards, and a typed data table, plus wallet components including a balance widget, transaction list, and top-up card. Every component is theme-aware with real light and dark mode driven by a single CSS token file. Figures render in monospaced type throughout for a precision-ledger feel. Copy the components into any project, wire up your own API, and ship.",
+  image: "https://flux-kit.vercel.app/",
+  techStack: ["React", "TypeScript", "Tailwind CSS", "Vite"],
+  githubUrl: "https://github.com/JONAHKIPKORIR/flux-kit",
+  liveUrl: "https://flux-kit.vercel.app/",
+  category: "frontend",
+  featured: true
+},
+  {
+  title: "PesaTools — Kenyan Financial Tools Platform",
+  description: "Free Kenya-specific financial tools including a verified 2026 PAYE calculator, loan comparator, PDF invoice generator, and 47 programmatic county loan pages.",
+  fullDescription: "PesaTools is a full-stack Next.js financial tools platform built specifically for Kenyan professionals and SMEs. It features a PAYE calculator verified against real KRA 2026 tax bands (SHIF at 2.75% replacing NHIF, NSSF Phase 4 at 6%, Housing Levy at 1.5%), a loan comparator with reducing-balance calculations across 8 Kenyan lenders, a browser-side PDF invoice generator using jsPDF with KRA-compliant formatting, and a programmatic SEO engine that auto-generates 47 county-specific loan pages from a single Next.js dynamic route template. The platform also includes a 10-article MDX blog system with mobile-responsive table rendering, a rent affordability calculator, salary and SME resource hubs, and all pages required for Google AdSense approval — About, Privacy Policy, Contact with FormSubmit integration, and Disclaimer. Deployed on Vercel with automatic GitHub CI/CD.",
+  image: "https://pesatools-nu.vercel.app",
+  techStack: [
+    "Next.js 16",
+    "TypeScript",
+    "Tailwind CSS v4",
+    "MDX",
+    "jsPDF",
+    "gray-matter",
+    "next-mdx-remote",
+    "remark-gfm",
+    "Vercel",
+    "FormSubmit"
+  ],
+  githubUrl: "https://github.com/JONAHKIPKORIR/pesatools",
+  liveUrl: "https://pesatools-nu.vercel.app",
+  category: "fullstack",
+  featured: true
+}
+];
 
   useEffect(() => {
     const adminData = localStorage.getItem('admin');
@@ -138,6 +265,23 @@ const AdminDashboard = () => {
     }
   };
 
+  // Quick add from template
+  const handleQuickAddTemplate = (template) => {
+    setFormData({
+      title: template.title,
+      description: template.description,
+      fullDescription: template.fullDescription,
+      image: template.image,
+      techStack: template.techStack,
+      githubUrl: template.githubUrl,
+      liveUrl: template.liveUrl,
+      category: template.category || 'fullstack',
+      featured: template.featured || false
+    });
+    setShowTemplateDropdown(false);
+    setShowModal(true);
+  };
+
   const StatCard = ({ icon: Icon, label, value, color }) => (
     <motion.div whileHover={{ y: -5 }} className="glass-card p-6 relative overflow-hidden group">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
@@ -159,7 +303,90 @@ const AdminDashboard = () => {
     { id: 'blog', label: 'Blog Posts', icon: FiFileText, color: 'from-green-500 to-emerald-500' },
     { id: 'messages', label: 'Messages', icon: FiMail, color: 'from-orange-500 to-red-500' },
     { id: 'admins', label: 'Admins', icon: FiUsers, color: 'from-indigo-500 to-purple-500' },
+    { id: 'settings', label: 'Settings', icon: FiSettings, color: 'from-gray-500 to-gray-600' },
   ];
+
+  // ========== SETTINGS TAB ==========
+  const renderSettingsTab = () => (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <h2 className="text-xl font-bold mb-6 dark:text-white">Settings</h2>
+      
+      {/* CV Upload Section */}
+      <div className="glass-card p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4 dark:text-white">CV / Resume</h3>
+        <p className="text-gray-500 text-sm mb-4">Upload your CV as a PDF file. This will be available for download on your portfolio.</p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              
+              const formData = new FormData();
+              formData.append('cv', file);
+              
+              try {
+                toast.loading('Uploading CV...');
+                await api.post('/admin/cv/upload', formData, {
+                  headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.dismiss();
+                toast.success('CV uploaded successfully!');
+                loadData();
+              } catch (err) {
+                toast.dismiss();
+                toast.error(err.response?.data?.error || 'Upload failed');
+              }
+            }}
+            className="input-primary"
+          />
+          <button
+            onClick={async () => {
+              try {
+                window.open('/api/admin/cv/download', '_blank');
+              } catch (err) {
+                toast.error('Failed to download CV');
+              }
+            }}
+            className="btn-secondary flex items-center gap-2"
+          >
+            <FiDownload /> Download Current CV
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-2">Accepted format: PDF only</p>
+      </div>
+      
+      {/* Quick Actions */}
+      <div className="glass-card p-6">
+        <h3 className="text-lg font-semibold mb-4 dark:text-white">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button
+            onClick={() => { setActiveTab('projects'); setShowModal(true); setEditingItem(null); }}
+            className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center hover:bg-purple-100 transition"
+          >
+            <FiPlus className="w-6 h-6 text-purple-500 mx-auto mb-2" />
+            <span className="text-sm font-medium">Add Project</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab('blog'); setShowModal(true); setEditingItem(null); }}
+            className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center hover:bg-green-100 transition"
+          >
+            <FiFileText className="w-6 h-6 text-green-500 mx-auto mb-2" />
+            <span className="text-sm font-medium">Add Blog Post</span>
+          </button>
+          <button
+            onClick={() => { setActiveTab('stats'); loadData(); }}
+            className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center hover:bg-blue-100 transition"
+          >
+            <FiRefreshCw className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+            <span className="text-sm font-medium">Refresh Data</span>
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -263,9 +490,37 @@ const AdminDashboard = () => {
         {/* Projects Tab */}
         {activeTab === 'projects' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <button onClick={() => { setEditingItem(null); setFormData({ title: '', description: '', fullDescription: '', image: '', techStack: [], githubUrl: '', liveUrl: '', category: 'fullstack', featured: false }); setShowModal(true); }} className="btn-primary mb-6">
-              <FiPlus className="inline mr-2" /> Add New Project
-            </button>
+            <div className="flex flex-wrap gap-3 mb-6">
+              <button onClick={() => { setEditingItem(null); setFormData({ title: '', description: '', fullDescription: '', image: '', techStack: [], githubUrl: '', liveUrl: '', category: 'fullstack', featured: false }); setShowModal(true); }} className="btn-primary flex items-center gap-2">
+                <FiPlus className="inline" /> Add New Project
+              </button>
+              
+              {/* 👇 QUICK ADD FROM TEMPLATE BUTTON */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowTemplateDropdown(!showTemplateDropdown)}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <FiCopy className="inline" /> Quick Add from Template
+                  <span className="text-xs">▼</span>
+                </button>
+                {showTemplateDropdown && (
+                  <div className="absolute top-full left-0 mt-1 w-72 glass-card rounded-lg overflow-hidden z-50 max-h-60 overflow-y-auto">
+                    {projectTemplates.map((template, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleQuickAddTemplate(template)}
+                        className="w-full text-left px-4 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0"
+                      >
+                        <div className="font-medium dark:text-white">{template.title}</div>
+                        <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {projects.map(project => (
                 <motion.div key={project._id} whileHover={{ y: -5 }} className="glass-card p-5 group">
@@ -418,6 +673,9 @@ const AdminDashboard = () => {
             )}
           </motion.div>
         )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && renderSettingsTab()}
       </main>
 
       {/* Project Modal */}

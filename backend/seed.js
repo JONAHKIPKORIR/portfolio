@@ -19,20 +19,20 @@ const seedSuperAdmin = async () => {
 
         // Hash password
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash('Admin123456', salt);
+        const hashedPassword = await bcrypt.hash('Kipkorir@001', salt);
 
         // Create Super Admin
         const admin = await Admin.create({
             name: 'Super Admin',
-            email: 'admin@portfolio.com',
+            email: 'jonahkiplimo8@gmail.com',
             password: hashedPassword,
             role: 'super_admin',
             isActive: true
         });
 
         console.log('✅ Super Admin created successfully!');
-        console.log('📧 Email: admin@portfolio.com');
-        console.log('🔑 Password: Admin123456');
+        console.log('📧 Email: jonahkiplimo8@gmail.com');
+        console.log('🔑 Password: Kipkorir@001');
         console.log('👑 Role: super_admin');
         console.log('⚠️ Please change this password after first login!');
         
