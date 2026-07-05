@@ -10,9 +10,6 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('Home');
 
-  // 👇 Check if user is logged in
-  const isLoggedIn = !!localStorage.getItem('adminToken');
-
   useEffect(() => {
     const saved = localStorage.getItem('darkMode') === 'true';
     setIsDark(saved);
@@ -104,13 +101,13 @@ const Navbar = () => {
                 </ScrollLink>
               ))}
 
-              {/* 👇 DASHBOARD LINK - Smart conditional navigation */}
+              {/* 👇 DASHBOARD LINK - Always visible */}
               <RouterLink
-                to={isLoggedIn ? "/admin/dashboard" : "/admin/login"}
+                to="/admin/login"
                 className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-medium hover:shadow-lg transition"
               >
                 <FiLayout size={16} />
-                {isLoggedIn ? "Dashboard" : "Login"}
+                Dashboard
               </RouterLink>
               
               <button
@@ -159,13 +156,13 @@ const Navbar = () => {
                   </ScrollLink>
                 ))}
                 
-                {/* 👇 DASHBOARD LINK - Mobile version */}
+                {/* 👇 DASHBOARD LINK - Mobile */}
                 <RouterLink
-                  to={isLoggedIn ? "/admin/dashboard" : "/admin/login"}
+                  to="/admin/login"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white w-full justify-center"
                 >
-                  <FiLayout size={16} /> {isLoggedIn ? "Dashboard" : "Login"}
+                  <FiLayout size={16} /> Dashboard
                 </RouterLink>
                 
                 <button
