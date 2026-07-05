@@ -4,10 +4,10 @@ const adminSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
-    role: { type: String, enum: ['admin', 'editor'], default: 'admin' }
+    role: { type: String, enum: ['super_admin', 'admin'], default: 'admin' },
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+    lastLogin: { type: Date, default: null }
 }, { timestamps: true });
-
-// No pre-save middleware
-// No comparePassword method (we'll compare in controller)
 
 module.exports = mongoose.model('Admin', adminSchema);
