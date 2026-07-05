@@ -47,6 +47,27 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+
+// ========== 404 HANDLER ==========
+app.use('*', (req, res) => {
+    res.status(404).json({ 
+        success: false, 
+        message: `Route ${req.originalUrl} not found`,
+        method: req.method
+    });
+});
+
+// ========== ERROR HANDLER ==========
+app.use((err, req, res, next) => {
+    console.error('Error:', err.message);
+    res.status(500).json({ 
+        success: false, 
+        message: err.message || 'Internal Server Error',
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api/health`);
