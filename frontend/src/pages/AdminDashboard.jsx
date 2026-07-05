@@ -2,33 +2,34 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiFolder, FiFileText, FiMail, FiEye, FiPlus, FiEdit2, FiTrash2, 
-  FiRefreshCw, FiLogOut, FiGrid, FiStar, FiTrendingUp,
-  FiMessageCircle, FiCheckCircle, FiUser, FiCalendar, FiSave, FiX
+  FiRefreshCw, FiLogOut, FiGrid, FiList, FiStar, FiTrendingUp,
+  FiMessageCircle, FiCheckCircle, FiXCircle, FiUser, FiCalendar,
+  FiGithub, FiExternalLink, FiImage, FiTag, FiSave, FiX, FiUsers,
+  FiShield, FiUserPlus, FiUserMinus
 } from 'react-icons/fi';
-import axios from 'axios';  // ← ADD THIS IMPORT
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({ projects: 0, blogPosts: 0, messages: 0, unreadMessages: 0 });
+  const [stats, setStats] = useState({ projects: 0, blogPosts: 0, messages: 0, unreadMessages: 0, totalAdmins: 0, isSuperAdmin: false });
   const [projects, setProjects] = useState([]);
   const [posts, setPosts] = useState([]);
   const [messages, setMessages] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [activeTab, setActiveTab] = useState('stats');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [admin, setAdmin] = useState(null);
+  const [newAdmin, setNewAdmin] = useState({ name: '', email: '', password: '', role: 'admin' });
   const [formData, setFormData] = useState({
     title: '', description: '', fullDescription: '', image: '',
     techStack: [], githubUrl: '', liveUrl: '', category: 'fullstack', featured: false
   });
 
   const token = localStorage.getItem('adminToken');
-  
-  // Use environment variable for API URL
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  
-  // Create axios instance with auth header
   const api = axios.create({
     baseURL: API_URL,
     headers: { Authorization: `Bearer ${token}` }
@@ -44,16 +45,18 @@ const AdminDashboard = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, projectsRes, postsRes, messagesRes] = await Promise.all([
+      const [statsRes, projectsRes, postsRes, messagesRes, adminsRes] = await Promise.all([
         api.get('/admin/stats'),
         api.get('/admin/projects'),
         api.get('/admin/blog'),
-        api.get('/admin/messages')
+        api.get('/admin/messages'),
+        api.get('/admin/admins').catch(() => ({ data: { admins: [] } }))
       ]);
       setStats(statsRes.data.data);
       setProjects(projectsRes.data.data);
       setPosts(postsRes.data.data);
       setMessages(messagesRes.data.data);
+      setAdmins(adminsRes.data.admins || []);
     } catch (error) {
       console.error('Load data error:', error);
       toast.error('Failed to load data');
@@ -108,14 +111,40 @@ const AdminDashboard = () => {
     window.location.href = '/admin/login';
   };
 
-  const StatCard = ({ icon: Icon, label, value, color, trend }) => (
+  // Admin Management Handlers
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.post('/admin/admins', newAdmin);
+      if (res.data.success) {
+        toast.success('Admin created successfully!');
+        setShowAdminModal(false);
+        setNewAdmin({ name: '', email: '', password: '', role: 'admin' });
+        loadData();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to create admin');
+    }
+  };
+
+  const handleDeleteAdmin = async (adminId) => {
+    if (!confirm('Are you sure you want to remove this admin?')) return;
+    try {
+      await api.delete(`/admin/admins/${adminId}`);
+      toast.success('Admin deleted successfully');
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to delete admin');
+    }
+  };
+
+  const StatCard = ({ icon: Icon, label, value, color }) => (
     <motion.div whileHover={{ y: -5 }} className="glass-card p-6 relative overflow-hidden group">
       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-5 transition-opacity`}></div>
       <div className="flex justify-between items-start">
         <div>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">{label}</p>
           <p className="text-3xl font-bold dark:text-white">{value}</p>
-          {trend && <p className="text-xs text-green-500 mt-1 flex items-center gap-1"><FiTrendingUp /> +12% from last month</p>}
         </div>
         <div className={`p-3 rounded-xl bg-gradient-to-br ${color} shadow-lg`}>
           <Icon className="w-6 h-6 text-white" />
@@ -129,6 +158,7 @@ const AdminDashboard = () => {
     { id: 'projects', label: 'Projects', icon: FiFolder, color: 'from-blue-500 to-cyan-500' },
     { id: 'blog', label: 'Blog Posts', icon: FiFileText, color: 'from-green-500 to-emerald-500' },
     { id: 'messages', label: 'Messages', icon: FiMail, color: 'from-orange-500 to-red-500' },
+    { id: 'admins', label: 'Admins', icon: FiUsers, color: 'from-indigo-500 to-purple-500' },
   ];
 
   if (loading) return (
@@ -150,7 +180,7 @@ const AdminDashboard = () => {
               <FiGrid className="text-white text-xl" />
             </div>
             <div>
-              <h1 className="font-bold text-xl dark:text-white">TaskFlow CMS</h1>
+              <h1 className="font-bold text-xl dark:text-white">Portfolio CMS</h1>
               <p className="text-xs text-gray-500">Content Management</p>
             </div>
           </div>
@@ -185,6 +215,11 @@ const AdminDashboard = () => {
                 <div className="flex-1">
                   <p className="font-semibold dark:text-white text-sm">{admin?.name || 'Admin'}</p>
                   <p className="text-xs text-gray-500">{admin?.email || 'admin@portfolio.com'}</p>
+                  {admin?.role && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-600">
+                      {admin.role}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -200,7 +235,6 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="ml-72 p-8">
-        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold dark:text-white">{tabs.find(t => t.id === activeTab)?.label}</h1>
@@ -214,42 +248,24 @@ const AdminDashboard = () => {
         {/* Stats Overview */}
         {activeTab === 'stats' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatCard icon={FiFolder} label="Total Projects" value={stats.projects} color="from-blue-500 to-cyan-500" trend />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+              <StatCard icon={FiFolder} label="Total Projects" value={stats.projects} color="from-blue-500 to-cyan-500" />
               <StatCard icon={FiFileText} label="Blog Posts" value={stats.blogPosts} color="from-green-500 to-emerald-500" />
               <StatCard icon={FiMail} label="Messages" value={stats.messages} color="from-orange-500 to-red-500" />
               <StatCard icon={FiEye} label="Unread Messages" value={stats.unreadMessages} color="from-purple-500 to-pink-500" />
-            </div>
-
-            {/* Recent Activity */}
-            <div className="glass-card p-6">
-              <h2 className="text-xl font-bold mb-4 dark:text-white">Recent Activity</h2>
-              <div className="space-y-3">
-                {projects.slice(0, 5).map(project => (
-                  <div key={project._id} className="flex items-center justify-between p-3 bg-white/50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
-                        <FiFolder className="text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium dark:text-white">{project.title}</p>
-                        <p className="text-xs text-gray-500">Added {new Date(project.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {stats.isSuperAdmin && (
+                <StatCard icon={FiUsers} label="Admin Users" value={stats.totalAdmins} color="from-indigo-500 to-purple-500" />
+              )}
             </div>
           </motion.div>
         )}
 
-        {/* Projects Manager */}
+        {/* Projects Tab */}
         {activeTab === 'projects' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <button onClick={() => { setEditingItem(null); setFormData({ title: '', description: '', fullDescription: '', image: '', techStack: [], githubUrl: '', liveUrl: '', category: 'fullstack', featured: false }); setShowModal(true); }} className="btn-primary mb-6">
               <FiPlus className="inline mr-2" /> Add New Project
             </button>
-            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {projects.map(project => (
                 <motion.div key={project._id} whileHover={{ y: -5 }} className="glass-card p-5 group">
@@ -271,7 +287,30 @@ const AdminDashboard = () => {
           </motion.div>
         )}
 
-        {/* Messages Panel */}
+        {/* Blog Tab */}
+        {activeTab === 'blog' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <button onClick={() => { setEditingItem(null); setFormData({ title: '', content: '', excerpt: '', image: '', tags: [] }); setShowModal(true); }} className="btn-primary mb-6">
+              <FiPlus className="inline mr-2" /> Add New Post
+            </button>
+            <div className="space-y-4">
+              {posts.map(post => (
+                <div key={post._id} className="glass-card p-4 flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold dark:text-white">{post.title}</h3>
+                    <p className="text-sm text-gray-500">{post.excerpt?.substring(0, 100)}...</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => { setEditingItem(post); setFormData(post); setShowModal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 rounded"><FiEdit2 /></button>
+                    <button onClick={() => handleDelete('blog', post._id)} className="p-2 text-red-500 hover:bg-red-50 rounded"><FiTrash2 /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Messages Tab */}
         {activeTab === 'messages' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             {messages.length === 0 ? (
@@ -310,6 +349,75 @@ const AdminDashboard = () => {
             )}
           </motion.div>
         )}
+
+        {/* Admins Tab */}
+        {activeTab === 'admins' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold dark:text-white">Admin Users</h2>
+              {stats.isSuperAdmin && (
+                <button onClick={() => setShowAdminModal(true)} className="btn-primary flex items-center gap-2">
+                  <FiUserPlus /> Add Admin
+                </button>
+              )}
+            </div>
+            
+            {!stats.isSuperAdmin ? (
+              <div className="glass-card p-8 text-center">
+                <FiShield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Super Admin privileges required to manage admin users.</p>
+              </div>
+            ) : (
+              <div className="glass-card overflow-hidden">
+                {admins.length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">No admin users found</div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-purple-50 dark:bg-purple-900/30">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                          <th className="px-4 py-3 text-center text-sm font-semibold">Role</th>
+                          <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                          <th className="px-4 py-3 text-center text-sm font-semibold">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                        {admins.map((a) => (
+                          <tr key={a._id} className="hover:bg-purple-50/50 dark:hover:bg-purple-900/20 transition">
+                            <td className="px-4 py-3 font-medium dark:text-white">{a.name}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{a.email}</td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-xs px-2 py-1 rounded-full ${a.role === 'super_admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                {a.role}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <span className={`text-xs px-2 py-1 rounded-full ${a.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {a.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center">
+                              <div className="flex justify-center gap-2">
+                                <button
+                                  onClick={() => handleDeleteAdmin(a._id)}
+                                  className="p-1 text-red-500 hover:bg-red-50 rounded transition"
+                                >
+                                  <FiUserMinus size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
       </main>
 
       {/* Project Modal */}
@@ -321,7 +429,6 @@ const AdminDashboard = () => {
                 <h2 className="text-2xl font-bold dark:text-white">{editingItem ? 'Edit Project' : 'Create New Project'}</h2>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><FiX /></button>
               </div>
-              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="input-primary" placeholder="Project Title" required />
@@ -331,24 +438,18 @@ const AdminDashboard = () => {
                     <option value="backend">Backend</option>
                   </select>
                 </div>
-                
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="input-primary" rows="2" placeholder="Short Description (max 100 chars)" required />
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="input-primary" rows="2" placeholder="Short Description" required />
                 <textarea value={formData.fullDescription} onChange={(e) => setFormData({ ...formData, fullDescription: e.target.value })} className="input-primary" rows="4" placeholder="Full Description" required />
-                
                 <input type="text" value={formData.image} onChange={(e) => setFormData({ ...formData, image: e.target.value })} className="input-primary" placeholder="Image URL" required />
-                
-                <input type="text" value={formData.techStack.join(', ')} onChange={(e) => setFormData({ ...formData, techStack: e.target.value.split(',').map(s => s.trim()) })} className="input-primary" placeholder="Tech Stack (comma separated: React, Node.js, MongoDB)" />
-                
+                <input type="text" value={formData.techStack.join(', ')} onChange={(e) => setFormData({ ...formData, techStack: e.target.value.split(',').map(s => s.trim()) })} className="input-primary" placeholder="Tech Stack (comma separated)" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <input type="text" value={formData.githubUrl} onChange={(e) => setFormData({ ...formData, githubUrl: e.target.value })} className="input-primary" placeholder="GitHub URL" required />
                   <input type="text" value={formData.liveUrl} onChange={(e) => setFormData({ ...formData, liveUrl: e.target.value })} className="input-primary" placeholder="Live Demo URL" />
                 </div>
-                
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input type="checkbox" checked={formData.featured} onChange={(e) => setFormData({ ...formData, featured: e.target.checked })} className="w-4 h-4" />
-                  <span className="text-gray-700 dark:text-gray-300">Feature this project (show on homepage)</span>
+                  <span className="text-gray-700 dark:text-gray-300">Feature this project</span>
                 </label>
-                
                 <div className="flex justify-end gap-3 pt-4">
                   <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
                   <button type="submit" className="btn-primary flex items-center gap-2"><FiSave /> {editingItem ? 'Update' : 'Create'}</button>
@@ -356,6 +457,82 @@ const AdminDashboard = () => {
               </form>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Admin Modal */}
+      <AnimatePresence>
+        {showAdminModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-card p-6 w-full max-w-md"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold dark:text-white">Add New Admin</h2>
+                <button onClick={() => setShowAdminModal(false)} className="p-1 hover:bg-gray-100 rounded">
+                  <FiX size={24} />
+                </button>
+              </div>
+              <form onSubmit={handleAddAdmin} className="space-y-4">
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Full Name *</label>
+                  <input
+                    type="text"
+                    value={newAdmin.name}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, name: e.target.value })}
+                    className="input-primary"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Email *</label>
+                  <input
+                    type="email"
+                    value={newAdmin.email}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
+                    className="input-primary"
+                    placeholder="admin@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Password *</label>
+                  <input
+                    type="password"
+                    value={newAdmin.password}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
+                    className="input-primary"
+                    placeholder="Min 6 characters"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Role</label>
+                  <select
+                    value={newAdmin.role}
+                    onChange={(e) => setNewAdmin({ ...newAdmin, role: e.target.value })}
+                    className="input-primary"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-3 pt-4">
+                  <button type="button" onClick={() => setShowAdminModal(false)} className="btn-secondary">
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    <FiUserPlus className="inline mr-2" /> Create Admin
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
