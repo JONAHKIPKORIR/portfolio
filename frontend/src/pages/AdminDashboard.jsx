@@ -130,6 +130,18 @@ const AdminDashboard = () => {
   const projectTemplates = [
     // --- Full Stack Projects ---
     {
+      title: "101 JS Projects — Vanilla JavaScript Collection",
+      description: "A curated collection of 101 Vanilla JS projects covering DOM manipulation, APIs, games, and UI logic.",
+      fullDescription: "A comprehensive skill-building collection of 101 mini-projects built with pure Vanilla JavaScript, HTML, and CSS. Each project demonstrates a specific concept — from basic DOM manipulation and event handling to API fetching with async/await and state persistence with LocalStorage. This proves rock-solid JavaScript fundamentals without relying on any framework.",
+      image: "https://raw.githubusercontent.com/JONAHKIPKORIR/101-JS-Projects/main/.github/images/gallery-preview.png",
+      techStack: ["Vanilla JS", "HTML5", "CSS3", "Fetch API", "LocalStorage", "DOM Manipulation"],
+      githubUrl: "https://github.com/JONAHKIPKORIR/101-JS-Projects",
+      liveUrl: "https://101-js-projects.vercel.app",
+      category: "vanilla-js",
+      featured: true,
+      status: "published"
+    },
+    {
       title: "URL Shortener API",
       description: "Production-ready URL shortener with analytics, click tracking, and custom short codes.",
       fullDescription: "A high-performance URL shortening service that generates unique codes, tracks click analytics, and provides detailed statistics. Built with Node.js, Express, and MongoDB.",
