@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { FiGithub, FiExternalLink, FiCode, FiEye } from 'react-icons/fi';
-import api from '../services/api'; // Use the configured api instance
+import api from '../services/api';
+
 const Projects = () => {
   const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
   const [projects, setProjects] = useState([]);
@@ -14,54 +15,58 @@ const Projects = () => {
     {
       _id: 1,
       title: "TaskFlow - Project Management",
-      description: "Real-time task management app with WebSockets, JWT auth, and MongoDB. Features drag-drop tasks, team collaboration, and real-time updates.",
+      description: "Real-time task management app with WebSockets, JWT auth, and MongoDB.",
       fullDescription: "TaskFlow is a comprehensive project management tool that helps teams organize tasks, track progress, and collaborate in real-time. Built with the MERN stack and Socket.io for instant updates.",
       image: "https://via.placeholder.com/600x400/667eea/ffffff?text=TaskFlow",
       techStack: ["React", "Node.js", "Socket.io", "MongoDB", "Tailwind", "JWT"],
       githubUrl: "https://github.com/JONAHKIPKORIR/taskflow",
       liveUrl: "https://taskflow-demo.onrender.com",
       category: "fullstack",
-      featured: true
+      featured: true,
+      status: "published"
     },
     {
       _id: 2,
       title: "URL Shortener API",
-      description: "Production-ready URL shortener with analytics, click tracking, and custom short codes. Includes rate limiting and caching.",
+      description: "Production-ready URL shortener with analytics, click tracking, and custom short codes.",
       fullDescription: "A high-performance URL shortening service that generates unique codes, tracks click analytics, and provides detailed statistics. Built with Node.js, Express, and MongoDB.",
       image: "https://via.placeholder.com/600x400/764ba2/ffffff?text=URL+Shortener",
       techStack: ["Node.js", "Express", "MongoDB", "Redis", "JWT"],
       githubUrl: "https://github.com/JONAHKIPKORIR/url-shortener",
       liveUrl: "https://url-shortener-mny6.onrender.com",
       category: "backend",
-      featured: true
+      featured: true,
+      status: "published"
     },
     {
       _id: 3,
-      title: "E-Commerce Platform",
-      description: "Full-featured e-commerce platform with cart, payments, and admin dashboard.",
-      fullDescription: "Complete e-commerce solution with product management, shopping cart, Stripe integration, order tracking, and admin panel.",
-      image: "https://via.placeholder.com/600x400/ec4899/ffffff?text=E-Commerce",
-      techStack: ["React", "Node.js", "Stripe", "MongoDB", "Redux"],
-      githubUrl: "#",
-      liveUrl: "#",
-      category: "fullstack",
-      featured: false
+      title: "Tip Calculator",
+      description: "A simple tip calculator built with Vanilla JavaScript.",
+      fullDescription: "A pure Vanilla JS project demonstrating DOM manipulation, event listeners, and basic arithmetic logic.",
+      image: "https://via.placeholder.com/600x400/16a34a/ffffff?text=Tip+Calculator",
+      techStack: ["HTML5", "CSS3", "JavaScript", "DOM Manipulation"],
+      githubUrl: "https://github.com/JONAHKIPKORIR/100-js-projects/tree/main/01-tip-calculator",
+      liveUrl: "https://100-js-projects.vercel.app/01-tip-calculator",
+      category: "vanilla-js",
+      featured: false,
+      status: "published"
     },
   ];
 
-
-
-// Instead of hardcoded axios.get
-useEffect(() => {
-    api.get('/projects')  // ← Uses env variable automatically
+  useEffect(() => {
+    api.get('/projects')
       .then(res => {
+        let fetchedProjects = [];
         if (res.data && Array.isArray(res.data.data)) {
-          setProjects(res.data.data);
+          fetchedProjects = res.data.data;
         } else if (Array.isArray(res.data)) {
-          setProjects(res.data);
+          fetchedProjects = res.data;
         } else {
-          setProjects(demoProjects);
+          fetchedProjects = demoProjects;
         }
+        // Only show published projects (or projects without a status field for backwards compatibility)
+        const visibleProjects = fetchedProjects.filter(p => !p.status || p.status === 'published');
+        setProjects(visibleProjects);
       })
       .catch(err => {
         console.error('Error fetching projects:', err);
@@ -70,14 +75,15 @@ useEffect(() => {
       .finally(() => setLoading(false));
   }, []);
 
+  // ===== UPDATED: Added "Vanilla JS" tab =====
   const categories = [
     { id: 'all', label: 'All Projects' },
     { id: 'fullstack', label: 'Full Stack' },
     { id: 'frontend', label: 'Frontend' },
     { id: 'backend', label: 'Backend' },
+    { id: 'vanilla-js', label: 'JS Mini Projects' }, // NEW TAB
   ];
 
-  // Make sure projects is an array before filtering
   const filteredProjects = Array.isArray(projects) 
     ? (filter === 'all' ? projects : projects.filter(p => p.category === filter))
     : [];
@@ -144,12 +150,19 @@ useEffect(() => {
                   onClick={() => setSelectedProject(project)}
                 >
                   {/* Project Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={project.image} 
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
+                  <div className="relative h-48 overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    {project.image ? (
+                      <img 
+                        src={project.image} 
+                        alt={project.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/600x400/cccccc/ffffff?text=No+Image'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <FiCode size={48} />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <a 
@@ -227,7 +240,9 @@ useEffect(() => {
             >
               <div className="p-6">
                 <h2 className="text-2xl font-bold mb-4 dark:text-white">{selectedProject.title}</h2>
-                <img src={selectedProject.image} alt={selectedProject.title} className="w-full rounded-lg mb-4" />
+                {selectedProject.image && (
+                  <img src={selectedProject.image} alt={selectedProject.title} className="w-full rounded-lg mb-4" />
+                )}
                 <p className="text-gray-600 dark:text-gray-300 mb-4">{selectedProject.fullDescription}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
                   {selectedProject.techStack?.map(tech => (

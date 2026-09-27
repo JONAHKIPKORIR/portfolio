@@ -1,6 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const Admin = require('../models/Admin');
 const Project = require('../models/Project');
 const BlogPost = require('../models/BlogPost');
@@ -8,6 +11,48 @@ const Message = require('../models/Message');
 const { protect, requireSuperAdmin } = require('../middleware/auth');
 
 const router = express.Router();
+
+// ========== MULTER CONFIGURATION ==========
+// Ensure upload directories exist
+const uploadDir = path.join(__dirname, '../uploads');
+const imageDir = path.join(__dirname, '../uploads/images');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir);
+
+// Storage for CVs (PDFs)
+const cvStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, uploadDir),
+    filename: (req, file, cb) => cb(null, 'cv.pdf') // Always save as cv.pdf
+});
+
+// Storage for Project Images
+const imageStorage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, imageDir),
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+// File filters
+const cvFilter = (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+    } else {
+        cb(new Error('Only PDF files are allowed for CV'), false);
+    }
+};
+
+const imageFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Only image files are allowed'), false);
+    }
+};
+
+const uploadCV = multer({ storage: cvStorage, fileFilter: cvFilter });
+const uploadImage = multer({ storage: imageStorage, fileFilter: imageFilter });
 
 // ========== ADMIN LOGIN ==========
 router.post('/login', async (req, res) => {
@@ -24,7 +69,6 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
         
-        // Update last login
         admin.lastLogin = new Date();
         await admin.save();
         
@@ -72,13 +116,11 @@ router.post('/admins', protect, requireSuperAdmin, async (req, res) => {
     try {
         const { name, email, password, role = 'admin' } = req.body;
         
-        // Check if admin already exists
         const existingAdmin = await Admin.findOne({ email });
         if (existingAdmin) {
             return res.status(400).json({ success: false, error: 'Admin already exists' });
         }
         
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
@@ -113,7 +155,6 @@ router.delete('/admins/:id', protect, requireSuperAdmin, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Admin not found' });
         }
         
-        // Prevent deleting your own account
         if (admin._id.toString() === req.admin._id.toString()) {
             return res.status(400).json({ success: false, error: 'Cannot delete your own account' });
         }
@@ -210,6 +251,20 @@ router.delete('/projects/:id', protect, async (req, res) => {
     }
 });
 
+// ========== IMAGE UPLOAD (Protected) ==========
+router.post('/upload', protect, uploadImage.single('image'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'No file uploaded' });
+        }
+        // Return the relative path. The frontend will prepend the API URL.
+        const filePath = `/uploads/images/${req.file.filename}`;
+        res.json({ success: true, url: filePath });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ========== BLOG MANAGEMENT ==========
 router.get('/blog', protect, async (req, res) => {
     try {
@@ -278,11 +333,7 @@ router.delete('/messages/:id', protect, async (req, res) => {
 // ========== CV MANAGEMENT ==========
 router.get('/cv', protect, async (req, res) => {
     try {
-        // Check if CV exists
-        const fs = require('fs');
-        const path = require('path');
-        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
-        
+        const cvPath = path.join(uploadDir, 'cv.pdf');
         if (fs.existsSync(cvPath)) {
             res.json({ success: true, hasCV: true, url: '/api/admin/cv/download' });
         } else {
@@ -295,42 +346,17 @@ router.get('/cv', protect, async (req, res) => {
 
 router.get('/cv/download', async (req, res) => {
     try {
-        const path = require('path');
-        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
+        const cvPath = path.join(uploadDir, 'cv.pdf');
         res.download(cvPath, 'Jonah_Kiplimo_CV.pdf');
     } catch (error) {
         res.status(404).json({ success: false, error: 'CV not found' });
     }
 });
 
-// Upload CV (using multer)
-const multer = require('multer');
-const upload = multer({ 
-    dest: 'uploads/',
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf') {
-            cb(null, true);
-        } else {
-            cb(new Error('Only PDF files are allowed'), false);
-        }
-    }
-});
-
-router.post('/cv/upload', protect, upload.single('cv'), async (req, res) => {
+router.post('/cv/upload', protect, uploadCV.single('cv'), async (req, res) => {
     try {
-        const fs = require('fs');
-        const path = require('path');
-        const cvPath = path.join(__dirname, '../uploads/cv.pdf');
-        
-        // Delete old CV if exists
-        if (fs.existsSync(cvPath)) {
-            fs.unlinkSync(cvPath);
-        }
-        
-        // Rename uploaded file to cv.pdf
-        fs.renameSync(req.file.path, cvPath);
-        
-        res.json({ success: true, message: 'CV uploaded successfully!' });
+        if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded' });
+        res.json({ success: true, message: 'CV uploaded successfully!', url: '/api/admin/cv/download' });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
